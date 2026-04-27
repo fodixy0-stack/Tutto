@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tutto — Punktetracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F7F5F0;
+    --surface: #FFFFFF;
+    --surface2: #F0EDE6;
+    --border: rgba(0,0,0,0.08);
+    --border2: rgba(0,0,0,0.14);
+    --text: #1A1916;
+    --text2: #6B6860;
+    --text3: #A8A49E;
+    --accent: #1A1916;
+    --accent-fg: #F7F5F0;
+    --red: #C44B35;
+    --red-bg: #FAF0ED;
+    --green: #3A7D5C;
+    --green-bg: #EDF5F0;
+    --amber: #B5781A;
+    --amber-bg: #FBF4E8;
+    --purple: #6B4FA0;
+    --purple-bg: #F3EFF9;
+    --purple-border: #C9B8E8;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --radius-xs: 6px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+    --shadow-lg: 0 2px 8px rgba(0,0,0,0.08), 0 12px 40px rgba(0,0,0,0.08);
+  }
+
+  html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  body { display: flex; flex-direction: column; min-height: 100vh; }
+  .app { flex: 1; display: flex; flex-direction: column; }
+
+  .header { padding: 28px 32px 0; display: flex; align-items: flex-start; justify-content: space-between; }
+  .logo { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 400; color: var(--text3); letter-spacing: 0.12em; text-transform: uppercase; }
+  .header-action { background: none; border: 1px solid var(--border2); color: var(--text2); font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; padding: 6px 14px; border-radius: 20px; transition: all 0.2s; }
+  .header-action:hover { background: var(--surface); color: var(--text); }
+
+  .screen { flex: 1; max-width: 520px; width: 100%; margin: 0 auto; padding: 32px 24px 48px; display: none; flex-direction: column; gap: 24px; }
+  .screen.active { display: flex; }
+
+  .screen-title { font-size: 32px; font-weight: 300; letter-spacing: -0.02em; color: var(--text); line-height: 1.2; }
+  .screen-sub { font-size: 14px; color: var(--text3); margin-top: 6px; font-weight: 300; }
+
+  .card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); padding: 24px; }
+  .card-label { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 400; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); margin-bottom: 16px; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 24px; border-radius: 50px; border: 1px solid var(--border2); background: transparent; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 400; cursor: pointer; transition: all 0.18s; white-space: nowrap; }
+  .btn:hover { background: var(--surface); border-color: var(--border2); transform: translateY(-1px); box-shadow: var(--shadow); }
+  .btn:active { transform: scale(0.98) translateY(0); }
+  .btn-fill { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+  .btn-fill:hover { background: #333; border-color: #333; box-shadow: var(--shadow-lg); }
+  .btn-full { width: 100%; }
+  .btn-sm { padding: 7px 14px; font-size: 13px; border-radius: 20px; }
+  .btn-ghost { border-color: transparent; color: var(--text2); }
+  .btn-ghost:hover { background: var(--surface2); }
+  .btn-danger { border-color: var(--red); color: var(--red); }
+  .btn-danger:hover { background: var(--red-bg); }
+
+  .pill-group { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill { padding: 8px 18px; border-radius: 50px; border: 1px solid var(--border2); background: transparent; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; transition: all 0.18s; color: var(--text2); }
+  .pill:hover { border-color: var(--text3); color: var(--text); }
+  .pill.active { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+
+  input[type=text], input[type=number] { width: 100%; padding: 12px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 300; outline: none; transition: all 0.18s; }
+  input:focus { border-color: var(--text3); background: var(--surface); box-shadow: 0 0 0 3px rgba(0,0,0,0.04); }
+  input::placeholder { color: var(--text3); }
+
+  .player-setup-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .player-setup-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .player-setup-row:first-child { padding-top: 0; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; flex-shrink: 0; font-family: 'DM Mono', monospace; letter-spacing: 0; }
+  .player-setup-row input { background: transparent; border-color: transparent; padding: 6px 0; font-size: 15px; }
+  .player-setup-row input:focus { background: var(--bg); border-color: var(--border2); padding: 6px 12px; border-radius: var(--radius-xs); }
+
+  .first-player-btn { display: flex; align-items: center; gap: 16px; padding: 18px 20px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); cursor: pointer; transition: all 0.18s; text-align: left; width: 100%; font-family: 'DM Sans', sans-serif; }
+  .first-player-btn:hover { border-color: var(--border2); box-shadow: var(--shadow); transform: translateY(-1px); }
+  .first-player-btn:active { transform: scale(0.99); }
+  .first-player-btn .name { font-size: 16px; color: var(--text); }
+
+  .current-player-hero { background: var(--accent); color: var(--accent-fg); border-radius: var(--radius); padding: 28px 24px; position: relative; overflow: hidden; }
+  .current-player-hero::before { content: ''; position: absolute; top: -40px; right: -40px; width: 160px; height: 160px; border-radius: 50%; background: rgba(255,255,255,0.04); }
+  .current-player-hero::after { content: ''; position: absolute; bottom: -60px; right: 20px; width: 220px; height: 220px; border-radius: 50%; background: rgba(255,255,255,0.03); }
+  .hero-label { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.5; margin-bottom: 8px; }
+  .hero-name { font-size: 26px; font-weight: 300; letter-spacing: -0.01em; margin-bottom: 4px; }
+  .hero-score { font-family: 'DM Mono', monospace; font-size: 48px; font-weight: 300; letter-spacing: -0.03em; line-height: 1; }
+  .hero-target { font-size: 13px; opacity: 0.45; margin-top: 6px; font-weight: 300; }
+
+  .input-area { display: flex; gap: 10px; }
+  .input-area input { flex: 1; font-size: 18px; font-weight: 300; padding: 14px 18px; }
+  .input-area .btn { padding: 14px 22px; border-radius: var(--radius-sm); }
+
+  .quick-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+  .quick-btn { padding: 9px 16px; border-radius: 50px; border: 1px solid var(--border2); background: var(--surface); font-family: 'DM Mono', monospace; font-size: 13px; cursor: pointer; transition: all 0.15s; color: var(--text2); }
+  .quick-btn:hover { border-color: var(--text3); color: var(--text); transform: translateY(-1px); box-shadow: var(--shadow); }
+  .quick-btn:active { transform: scale(0.97); }
+
+  .score-row { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--border); transition: opacity 0.2s; }
+  .score-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .score-row:first-child { padding-top: 0; }
+  .score-row .score-name { flex: 1; font-size: 15px; }
+  .score-row .score-pts { font-family: 'DM Mono', monospace; font-size: 20px; font-weight: 300; letter-spacing: -0.02em; color: var(--text); }
+  .score-row .rank { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text3); min-width: 18px; }
+  .badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 400; }
+  .badge-current { background: var(--accent); color: var(--accent-fg); }
+  .badge-win { background: var(--green-bg); color: var(--green); }
+  .progress-bar { height: 2px; background: var(--border); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s ease; }
+
+  .history-entry { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .history-entry:last-child { border-bottom: none; }
+  .history-name { color: var(--text2); }
+  .history-delta { font-family: 'DM Mono', monospace; font-size: 13px; }
+  .history-delta.pos { color: var(--green); }
+  .history-delta.neg { color: var(--red); }
+  .undo-link { font-size: 12px; color: var(--text3); cursor: pointer; padding: 4px 8px; border-radius: var(--radius-xs); transition: all 0.15s; border: none; background: none; font-family: 'DM Sans', sans-serif; }
+  .undo-link:hover { background: var(--red-bg); color: var(--red); }
+
+  /* SPECIAL CARDS SECTION */
+  .special-cards-section { border-radius: var(--radius); border: 1px solid var(--purple-border); background: var(--purple-bg); padding: 20px 24px; position: relative; overflow: hidden; }
+  .special-cards-section::before { content: ''; position: absolute; top: -30px; right: -30px; width: 120px; height: 120px; border-radius: 50%; background: rgba(107,79,160,0.06); }
+  .special-section-label { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--purple); margin-bottom: 4px; opacity: 0.8; }
+  .special-section-desc { font-size: 12px; color: var(--purple); opacity: 0.65; margin-bottom: 16px; font-weight: 300; }
+  .special-btns { display: flex; flex-direction: column; gap: 10px; }
+
+  /* TUTTO BUTTON */
+  .tutto-btn {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 18px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--purple-border);
+    background: white;
+    cursor: pointer;
+    text-align: left;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .tutto-btn::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(107,79,160,0.04) 0%, transparent 60%); }
+  .tutto-btn:hover { border-color: var(--purple); box-shadow: 0 2px 12px rgba(107,79,160,0.14); transform: translateY(-1px); }
+  .tutto-btn:active { transform: scale(0.99); }
+  .tutto-btn-icon { width: 38px; height: 38px; border-radius: 10px; background: var(--purple-bg); border: 1px solid var(--purple-border); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .tutto-btn-text { flex: 1; }
+  .tutto-btn-title { font-size: 14px; font-weight: 400; color: var(--purple); }
+  .tutto-btn-sub { font-size: 12px; color: var(--text3); margin-top: 2px; font-weight: 300; line-height: 1.4; }
+
+  /* INSTANT WIN BUTTON */
+  .instant-btn {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 18px;
+    border-radius: var(--radius-sm);
+    border: 1px solid #C9B8E8;
+    background: white;
+    cursor: pointer;
+    text-align: left;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .instant-btn::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(180,74,74,0.04) 0%, transparent 60%); }
+  .instant-btn:hover { border-color: var(--amber); box-shadow: 0 2px 12px rgba(181,120,26,0.14); transform: translateY(-1px); }
+  .instant-btn:active { transform: scale(0.99); }
+  .instant-btn-icon { width: 38px; height: 38px; border-radius: 10px; background: var(--amber-bg); border: 1px solid rgba(181,120,26,0.2); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .instant-btn-title { font-size: 14px; font-weight: 400; color: var(--amber); }
+  .instant-btn-sub { font-size: 12px; color: var(--text3); margin-top: 2px; font-weight: 300; line-height: 1.4; }
+
+  /* MODALS */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(26,25,22,0.4); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 300; padding: 24px; opacity: 0; transition: opacity 0.2s; }
+  .modal-overlay.visible { opacity: 1; }
+  .modal-box { background: var(--surface); border-radius: var(--radius); padding: 32px; width: 100%; max-width: 400px; box-shadow: var(--shadow-lg); transform: translateY(8px); transition: transform 0.25s; }
+  .modal-overlay.visible .modal-box { transform: translateY(0); }
+  .modal-title { font-size: 20px; font-weight: 300; margin-bottom: 6px; letter-spacing: -0.01em; }
+  .modal-sub { font-size: 14px; color: var(--text3); margin-bottom: 24px; font-weight: 300; line-height: 1.5; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+
+  /* TUTTO MODAL — pick who is leading */
+  .player-pick-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .player-pick-btn { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg); cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text); transition: all 0.15s; text-align: left; }
+  .player-pick-btn:hover { border-color: var(--border2); background: var(--surface); transform: translateY(-1px); box-shadow: var(--shadow); }
+  .player-pick-btn span { flex: 1; }
+  .player-pick-btn .pts { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text3); }
+
+  /* INSTANT WIN MODAL */
+  .instant-pick-btn { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: var(--radius-sm); border: 1px solid var(--amber-bg); background: var(--amber-bg); cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text); transition: all 0.15s; text-align: left; width: 100%; margin-bottom: 8px; }
+  .instant-pick-btn:hover { border-color: var(--amber); transform: translateY(-1px); box-shadow: var(--shadow); }
+
+  /* TUTTO COUNTER badge on hero */
+  .tutto-counter { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; background: rgba(255,255,255,0.1); border-radius: 20px; padding: 4px 12px; font-size: 12px; opacity: 0.8; }
+  .tutto-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.6); transition: background 0.3s; }
+  .tutto-dot.filled { background: white; }
+
+  /* FINISH */
+  .podium-row { display: flex; align-items: center; gap: 16px; padding: 18px 20px; border-radius: var(--radius-sm); border: 1px solid var(--border); margin-bottom: 10px; }
+  .podium-row.first { border-color: var(--amber); background: var(--amber-bg); }
+  .podium-place { font-family: 'DM Mono', monospace; font-size: 24px; font-weight: 300; color: var(--text3); min-width: 32px; }
+  .podium-row.first .podium-place { color: var(--amber); }
+  .podium-name { flex: 1; font-size: 16px; }
+  .podium-score { font-family: 'DM Mono', monospace; font-size: 20px; font-weight: 300; }
+  .finish-reason { font-size: 12px; font-family: 'DM Mono', monospace; color: var(--text3); letter-spacing: 0.05em; margin-top: 4px; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  .screen.active > * { animation: fadeIn 0.35s ease both; }
+  .screen.active > *:nth-child(1) { animation-delay: 0ms; }
+  .screen.active > *:nth-child(2) { animation-delay: 60ms; }
+  .screen.active > *:nth-child(3) { animation-delay: 120ms; }
+  .screen.active > *:nth-child(4) { animation-delay: 180ms; }
+  .screen.active > *:nth-child(5) { animation-delay: 240ms; }
+  .screen.active > *:nth-child(6) { animation-delay: 300ms; }
+
+  @keyframes cardPulse { 0%,100%{box-shadow:0 0 0 0 rgba(107,79,160,0.3)} 50%{box-shadow:0 0 0 8px rgba(107,79,160,0)} }
+  .pulse { animation: cardPulse 1.2s ease 2; }
+
+  .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--text); color: var(--accent-fg); padding: 10px 20px; border-radius: 50px; font-size: 13px; font-weight: 300; opacity: 0; transition: all 0.25s; pointer-events: none; z-index: 999; white-space: nowrap; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .av0 { background: #F0EDE6; color: #6B6860; }
+  .av1 { background: #EDF5F0; color: #3A7D5C; }
+  .av2 { background: #E6F1FB; color: #185FA5; }
+  .av3 { background: #FBF4E8; color: #B5781A; }
+  .av4 { background: #FAF0ED; color: #C44B35; }
+  .av5 { background: #F5EDF8; color: #7B4FA0; }
+  .divider { height: 1px; background: var(--border); }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <span class="logo">Tutto</span>
+    <button class="header-action" id="headerResetBtn" style="display:none" onclick="handleReset()">Neustart</button>
+  </header>
+
+  <!-- SETUP -->
+  <div class="screen active" id="screen-setup">
+    <div>
+      <div class="screen-title">Neues Spiel</div>
+      <div class="screen-sub">Spieler und Ziel festlegen</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Spieleranzahl</div>
+      <div class="pill-group" style="margin-bottom:20px">
+        <button class="pill" onclick="setCount(2)">2</button>
+        <button class="pill" onclick="setCount(3)">3</button>
+        <button class="pill active" onclick="setCount(4)">4</button>
+        <button class="pill" onclick="setCount(5)">5</button>
+        <button class="pill" onclick="setCount(6)">6</button>
+      </div>
+      <div id="playerInputs"></div>
+    </div>
+    <div class="card">
+      <div class="card-label">Ziel (Punkte)</div>
+      <div class="pill-group" style="margin-bottom:12px">
+        <button class="pill" onclick="setWin(3000)">3 000</button>
+        <button class="pill active" onclick="setWin(6000)">6 000</button>
+        <button class="pill" onclick="setWin(9000)">9 000</button>
+      </div>
+      <input type="number" id="customWin" placeholder="Eigene Zahl eingeben…" style="margin-top:4px"/>
+    </div>
+    <button class="btn btn-fill btn-full" style="padding:16px" onclick="startGame()">Spiel starten →</button>
+  </div>
+
+  <!-- FIRST PLAYER -->
+  <div class="screen" id="screen-first">
+    <div>
+      <div class="screen-title">Wer fängt an?</div>
+      <div class="screen-sub">Ersten Spieler auswählen</div>
+    </div>
+    <div id="firstPlayerList"></div>
+    <div class="divider"></div>
+    <button class="btn" onclick="randomFirst()">Zufällige Auswahl</button>
+  </div>
+
+  <!-- GAME -->
+  <div class="screen" id="screen-game">
+    <div id="heroCard" class="current-player-hero"></div>
+
+    <div class="card">
+      <div class="card-label">Punkte für diesen Zug</div>
+      <div class="input-area" style="margin-bottom:14px">
+        <input type="number" id="pointsInput" placeholder="0"/>
+        <button class="btn btn-fill" onclick="addPoints()">OK</button>
+      </div>
+      <div class="quick-btns" id="quickBtns"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Punktestand</div>
+      <div id="scoreboard"></div>
+    </div>
+
+    <!-- SPECIAL CARDS -->
+    <div class="special-cards-section" id="specialSection">
+      <div class="special-section-label">Sonderkarten</div>
+      <div class="special-section-desc">Werden selten ausgespielt — nur bei entsprechender Karte verwenden</div>
+      <div class="special-btns">
+        <button class="tutto-btn" onclick="openTuttoModal()">
+          <div class="tutto-btn-icon">🎲</div>
+          <div class="tutto-btn-text">
+            <div class="tutto-btn-title">+1 000 / −1 000</div>
+            <div class="tutto-btn-sub">Alle Würfel gespielt — der Führende verliert 1 000, der aktive Spieler gewinnt 1 000. Führt der aktive Spieler, bekommt er einfach 1 000.</div>
+          </div>
+        </button>
+        <button class="instant-btn" onclick="openInstantModal()">
+          <div class="instant-btn-icon">⚡</div>
+          <div class="tutto-btn-text">
+            <div class="instant-btn-title">Sofortiger Sieg</div>
+            <div class="tutto-btn-sub">Zweimal alle Würfel gespielt — dieser Spieler gewinnt sofort, unabhängig vom Punktestand.</div>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <div class="card" id="historyCard">
+      <div class="card-label">Verlauf</div>
+      <div id="historyList"></div>
+    </div>
+  </div>
+
+  <!-- FINISH -->
+  <div class="screen" id="screen-finish">
+    <div>
+      <div class="screen-title">Spiel beendet</div>
+      <div class="screen-sub" id="finishSub"></div>
+    </div>
+    <div id="podium"></div>
+    <button class="btn btn-fill btn-full" style="padding:16px;margin-top:8px" onclick="newGame()">Neues Spiel →</button>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="editModal" onclick="closeModalOutside(event,'editModal')">
+  <div class="modal-box">
+    <div class="modal-title" id="editModalTitle">Punktekorrektur</div>
+    <div class="modal-sub" id="editModalSub"></div>
+    <input type="number" id="editScoreInput" placeholder="Neuer Punktestand"/>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('editModal')">Abbrechen</button>
+      <button class="btn btn-fill" style="flex:1" onclick="applyEdit()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- TUTTO MODAL -->
+<div class="modal-overlay" id="tuttoModal" onclick="closeModalOutside(event,'tuttoModal')">
+  <div class="modal-box">
+    <div class="modal-title">🎲 +1 000 / −1 000</div>
+    <div class="modal-sub" id="tuttoModalSub"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('tuttoModal')">Abbrechen</button>
+      <button class="btn btn-fill" style="flex:1" onclick="confirmTutto()">Bestätigen</button>
+    </div>
+  </div>
+</div>
+
+<!-- INSTANT WIN MODAL -->
+<div class="modal-overlay" id="instantModal" onclick="closeModalOutside(event,'instantModal')">
+  <div class="modal-box">
+    <div class="modal-title">⚡ Sofortiger Sieg</div>
+    <div class="modal-sub">Wer hat zweimal alle Würfel gespielt und gewinnt das Spiel sofort?</div>
+    <div id="instantPlayerList" style="margin-top:8px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('instantModal')">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const AVATAR_COLORS = ['av0','av1','av2','av3','av4','av5'];
+const QUICK_VALS = [50, 100, 200, 300, 500, 700, 1000, 1500];
+
+let state = {
+  playerCount: 4,
+  playerNames: ['','','','','',''],
+  winScore: 6000,
+  players: [],
+  currentIdx: 0,
+  history: [],
+  editPlayerId: null,
+  finishReason: '',
+};
+
+function $(id) { return document.getElementById(id); }
+
+function showToast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $('screen-' + name).classList.add('active');
+  $('headerResetBtn').style.display = name === 'game' ? '' : 'none';
+}
+
+function initials(name) {
+  return name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0,2) || '?';
+}
+
+function avatar(player, size = 36) {
+  return `<div class="avatar ${player.avClass}" style="width:${size}px;height:${size}px;font-size:${size<=36?12:14}px">${initials(player.name)}</div>`;
+}
+
+function leadingPlayer() {
+  return [...state.players].sort((a,b) => b.score - a.score)[0];
+}
+
+/* SETUP */
+function setCount(n) {
+  state.playerCount = n;
+  document.querySelectorAll('#screen-setup .pill-group:first-of-type .pill').forEach((b,i) => {
+    b.classList.toggle('active', [2,3,4,5,6][i] === n);
+  });
+  renderPlayerInputs();
+}
+
+function setWin(v) {
+  state.winScore = v;
+  $('customWin').value = '';
+  document.querySelectorAll('#screen-setup .card:nth-child(3) .pill').forEach(b => {
+    b.classList.toggle('active', b.textContent.replace(/\s/g,'') == String(v).replace(/\s/g,''));
+  });
+}
+
+function renderPlayerInputs() {
+  const c = $('playerInputs');
+  c.innerHTML = '';
+  for (let i = 0; i < state.playerCount; i++) {
+    const row = document.createElement('div');
+    row.className = 'player-setup-row';
+    row.innerHTML = `
+      <div class="avatar ${AVATAR_COLORS[i]}" style="width:36px;height:36px;font-size:12px">${i+1}</div>
+      <input type="text" placeholder="Spieler ${i+1}" value="${state.playerNames[i]||''}" data-idx="${i}"/>
+    `;
+    row.querySelector('input').addEventListener('input', e => {
+      state.playerNames[+e.target.dataset.idx] = e.target.value;
+    });
+    c.appendChild(row);
+  }
+}
+
+function startGame() {
+  const names = state.playerNames.slice(0, state.playerCount).map((n,i) => n.trim() || `Spieler ${i+1}`);
+  state.players = names.map((name,i) => ({ id: i, name, score: 0, avClass: AVATAR_COLORS[i], tuttoCount: 0 }));
+  state.history = [];
+  state.currentIdx = 0;
+
+  const list = $('firstPlayerList');
+  list.innerHTML = '';
+  state.players.forEach((p,i) => {
+    const btn = document.createElement('button');
+    btn.className = 'first-player-btn';
+    btn.innerHTML = `${avatar(p)}<div><div class="name">${p.name}</div></div>`;
+    btn.onclick = () => setFirst(i);
+    list.appendChild(btn);
+  });
+  showScreen('first');
+}
+
+function setFirst(i) {
+  state.currentIdx = i;
+  renderGame();
+  showScreen('game');
+}
+
+function randomFirst() {
+  setFirst(Math.floor(Math.random() * state.players.length));
+  showToast('Zufälliger Spieler ausgewählt');
+}
+
+/* GAME */
+function renderGame() {
+  const cur = state.players[state.currentIdx];
+  const pct = Math.min(100, Math.round(cur.score / state.winScore * 100));
+  const dots = [0,1].map(i =>
+    `<div class="tutto-dot ${cur.tuttoCount > i ? 'filled' : ''}"></div>`
+  ).join('');
+
+  $('heroCard').innerHTML = `
+    <div class="hero-label">Aktueller Spieler</div>
+    <div class="hero-name">${cur.name}</div>
+    <div class="hero-score">${cur.score.toLocaleString('de')}</div>
+    <div class="hero-target">Ziel: ${state.winScore.toLocaleString('de')}</div>
+    <div class="progress-bar" style="margin-top:20px;background:rgba(255,255,255,0.12)">
+      <div class="progress-fill" style="width:${pct}%;background:rgba(255,255,255,0.55)"></div>
+    </div>
+  `;
+
+  const qb = $('quickBtns');
+  qb.innerHTML = QUICK_VALS.map(v => `<button class="quick-btn" onclick="quickAdd(${v})">+${v}</button>`).join('');
+  qb.innerHTML += `<button class="quick-btn" style="color:var(--red);border-color:var(--red)" onclick="skipTurn()">Aussetzen</button>`;
+
+  renderScoreboard();
+  renderHistory();
+  $('pointsInput').value = '';
+  setTimeout(() => $('pointsInput').focus(), 80);
+}
+
+function renderScoreboard() {
+  const sorted = [...state.players].sort((a,b) => b.score - a.score);
+  const cur = state.players[state.currentIdx];
+  $('scoreboard').innerHTML = sorted.map((p,i) => {
+    const isCur = p.id === cur.id;
+    const isWin = p.score >= state.winScore;
+    const pct = Math.min(100, Math.round(p.score / state.winScore * 100));
+    return `<div class="score-row">
+      <span class="rank">${i+1}</span>
+      ${avatar(p, 32)}
+      <span class="score-name">${p.name}${isCur ? ' <span class="badge badge-current">am Zug</span>' : ''}${isWin ? ' <span class="badge badge-win">Gewinner!</span>' : ''}</span>
+      <span class="score-pts">${p.score.toLocaleString('de')}</span>
+      <button class="btn btn-sm btn-ghost" onclick="openEdit(${p.id})">✎</button>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>`;
+  }).join('');
+}
+
+function renderHistory() {
+  const recent = state.history.slice(-8).reverse();
+  if (!recent.length) {
+    $('historyList').innerHTML = '<div style="font-size:13px;color:var(--text3);font-weight:300">Noch keine Züge</div>';
+    return;
+  }
+  $('historyList').innerHTML = recent.map((h,i) => {
+    const p = state.players.find(x => x.id === h.playerId);
+    const sign = h.delta >= 0 ? '+' : '';
+    const cls = h.delta >= 0 ? 'pos' : 'neg';
+    const label = h.special ? ` <span style="font-size:11px;opacity:0.6">(${h.special})</span>` : '';
+    return `<div class="history-entry">
+      <span class="history-name">${p ? p.name : '?'} → ${h.after.toLocaleString('de')}${label}</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="history-delta ${cls}">${sign}${h.delta.toLocaleString('de')}</span>
+        ${i === 0 ? `<button class="undo-link" onclick="undoLast()">↩ rückgängig</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function addPoints() {
+  const v = parseInt($('pointsInput').value);
+  if (isNaN(v)) { showToast('Bitte eine Zahl eingeben'); return; }
+  recordMove(v);
+}
+
+function quickAdd(v) { recordMove(v); }
+
+function skipTurn() {
+  nextPlayer();
+  renderGame();
+  showToast('Zug ausgesetzt');
+}
+
+function recordMove(delta, special) {
+  const p = state.players[state.currentIdx];
+  const before = p.score;
+  if (delta === 0) { skipTurn(); return; }
+  p.score += delta;
+  state.history.push({ playerId: p.id, delta, before, after: p.score, special: special || null });
+  if (p.score >= state.winScore) {
+    state.finishReason = 'Punkteziel erreicht';
+    showFinish(p);
+    return;
+  }
+  nextPlayer();
+  renderGame();
+}
+
+function nextPlayer() {
+  state.currentIdx = (state.currentIdx + 1) % state.players.length;
+}
+
+function undoLast() {
+  if (!state.history.length) return;
+  const last = state.history.pop();
+  const p = state.players.find(x => x.id === last.playerId);
+  if (p) {
+    p.score = last.before;
+    state.currentIdx = state.players.findIndex(x => x.id === last.playerId);
+    // Undo tutto count if needed
+    if (last.special === 'Tutto') p.tuttoCount = Math.max(0, (p.tuttoCount||0) - 1);
+  }
+  renderGame();
+  showToast('Zug rückgängig gemacht');
+}
+
+/* EDIT MODAL */
+function openEdit(id) {
+  state.editPlayerId = id;
+  const p = state.players.find(x => x.id === id);
+  $('editModalTitle').textContent = `Korrektur: ${p.name}`;
+  $('editModalSub').textContent = `Aktueller Stand: ${p.score.toLocaleString('de')} Punkte`;
+  $('editScoreInput').value = p.score;
+  openModal('editModal');
+  setTimeout(() => { $('editScoreInput').focus(); $('editScoreInput').select(); }, 50);
+}
+
+function applyEdit() {
+  const v = parseInt($('editScoreInput').value);
+  if (isNaN(v)) { showToast('Bitte eine Zahl eingeben'); return; }
+  const p = state.players.find(x => x.id === state.editPlayerId);
+  if (p) {
+    const before = p.score;
+    p.score = v;
+    state.history.push({ playerId: p.id, delta: v - before, before, after: v, special: 'Korrektur' });
+  }
+  closeModal('editModal');
+  renderGame();
+  showToast('Punktestand aktualisiert');
+}
+
+/* TUTTO MODAL */
+function openTuttoModal() {
+  const cur = state.players[state.currentIdx];
+  const maxScore = Math.max(...state.players.map(p => p.score));
+  const leaders = state.players.filter(p => p.score === maxScore);
+  const allTied = leaders.length === state.players.length;
+  const isSelf = leaders.some(p => p.id === cur.id);
+  let msg;
+  if (allTied) {
+    msg = `Alle Spieler haben gleich viele Punkte — niemand verliert Punkte. ${cur.name} bekommt +1 000.`;
+  } else if (isSelf) {
+    msg = `${cur.name} führt selbst — bekommt +1 000 Punkte.`;
+  } else {
+    const leader = leaders[0];
+    msg = `${leader.name} führt (${leader.score.toLocaleString('de')} Pkt.) — verliert 1 000.\n${cur.name} bekommt +1 000.`;
+  }
+  $('tuttoModalSub').textContent = msg;
+  openModal('tuttoModal');
+}
+
+function confirmTutto() {
+  const cur = state.players[state.currentIdx];
+  const maxScore = Math.max(...state.players.map(p => p.score));
+  const leaders = state.players.filter(p => p.score === maxScore);
+  const allTied = leaders.length === state.players.length;
+  const isSelf = leaders.some(p => p.id === cur.id);
+  closeModal('tuttoModal');
+  if (allTied || isSelf) {
+    recordMove(1000, '+1 000');
+    showToast(`${cur.name} +1 000`);
+  } else {
+    const leader = leaders[0];
+    const lBefore = leader.score;
+    leader.score -= 1000;
+    state.history.push({ playerId: leader.id, delta: -1000, before: lBefore, after: leader.score, special: '−1 000' });
+    recordMove(1000, '+1 000');
+    showToast(`${leader.name} −1 000 · ${cur.name} +1 000`);
+  }
+}
+
+/* INSTANT WIN MODAL */
+function openInstantModal() {
+  const list = $('instantPlayerList');
+  list.innerHTML = '';
+  state.players.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'instant-pick-btn';
+    btn.innerHTML = `${avatar(p, 36)}<span style="flex:1;font-size:15px">${p.name}</span><span style="font-family:'DM Mono',monospace;font-size:13px;color:var(--text3)">${p.score.toLocaleString('de')} Pkt.</span>`;
+    btn.onclick = () => applyInstantWin(p.id);
+    list.appendChild(btn);
+  });
+  openModal('instantModal');
+}
+
+function applyInstantWin(playerId) {
+  const p = state.players.find(x => x.id === playerId);
+  closeModal('instantModal');
+  state.finishReason = 'Sofortiger Sieg (Sonderkarte)';
+  showFinish(p);
+}
+
+/* MODAL HELPERS */
+function openModal(id) {
+  const m = $(id);
+  m.style.display = 'flex';
+  requestAnimationFrame(() => m.classList.add('visible'));
+}
+
+function closeModal(id) {
+  const m = $(id);
+  m.classList.remove('visible');
+  setTimeout(() => { m.style.display = 'none'; }, 220);
+}
+
+function closeModalOutside(e, id) {
+  if (e.target === $(id)) closeModal(id);
+}
+
+/* FINISH */
+function showFinish(winner) {
+  const sorted = [...state.players].sort((a,b) => b.score - a.score);
+  $('finishSub').textContent = `${winner.name} gewinnt — ${state.finishReason}`;
+  $('podium').innerHTML = sorted.map((p,i) => `
+    <div class="podium-row ${p.id === winner.id ? 'first' : ''}">
+      <div class="podium-place">${p.id === winner.id ? '★' : i+1}</div>
+      ${avatar(p, 40)}
+      <div class="podium-name">${p.name}</div>
+      <div class="podium-score">${p.score.toLocaleString('de')}</div>
+    </div>
+  `).join('');
+  showScreen('finish');
+}
+
+function handleReset() {
+  if (confirm('Aktuelles Spiel zurücksetzen?')) newGame();
+}
+
+function newGame() {
+  state.players = [];
+  state.history = [];
+  state.playerCount = 4;
+  state.playerNames = ['','','','','',''];
+  state.winScore = 6000;
+  state.finishReason = '';
+  renderPlayerInputs();
+  document.querySelectorAll('#screen-setup .pill-group:first-of-type .pill').forEach((b,i) => {
+    b.classList.toggle('active', i === 2);
+  });
+  setWin(6000);
+  showScreen('setup');
+}
+
+/* INIT */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && $('screen-game').classList.contains('active') && document.activeElement === $('pointsInput')) addPoints();
+  if (e.key === 'Enter' && $('editModal').classList.contains('visible')) applyEdit();
+  if (e.key === 'Escape') {
+    ['editModal','tuttoModal','instantModal'].forEach(id => {
+      if ($(id).classList.contains('visible')) closeModal(id);
+    });
+  }
+});
+
+$('customWin').addEventListener('input', e => {
+  const v = parseInt(e.target.value);
+  if (v > 0) {
+    state.winScore = v;
+    document.querySelectorAll('#screen-setup .card:nth-child(3) .pill').forEach(b => b.classList.remove('active'));
+  }
+});
+
+['editModal','tuttoModal','instantModal'].forEach(id => { $(id).style.display = 'none'; });
+renderPlayerInputs();
+setWin(6000);
+</script>
+</body>
+</html>
